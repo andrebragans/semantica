@@ -1,0 +1,79 @@
+lda 0
+rdi
+lda 1
+rdi
+lda 2
+rdi
+lod 0
+lod 1
+grt
+fjp L0
+lda 4
+ldc 2
+ldc 3
+adi
+ldc 4
+sbi
+ldc 5
+adi
+ldc 6
+ldc 5
+mpi
+sbi
+ldc 1
+sbi
+sto
+lda 1
+lod 0
+sto
+lda 0
+lod 4
+sto
+lab L0
+lod 0
+lod 2
+grt
+lod 1
+lod 3
+lte
+and
+lod 0
+ldc 3
+grt
+and
+lod 1
+lod 3
+neq
+or
+fjp L1
+lda 4
+lod 2
+sto
+lda 2
+lod 0
+sto
+lda 0
+lod 4
+sto
+lab L1
+lod 1
+lod 2
+grt
+fjp L2
+lda 4
+lod 2
+sto
+lda 2
+lod 1
+sto
+lda 1
+lod 4
+sto
+lab L2
+lod 0
+wri
+lod 1
+wri
+lod 2
+wri
+stp
