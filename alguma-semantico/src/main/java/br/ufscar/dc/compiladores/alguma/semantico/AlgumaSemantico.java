@@ -8,15 +8,18 @@ public class AlgumaSemantico extends AlgumaBaseVisitor<Void> {
 
     @Override
     public Void visitPrograma(AlgumaParser.ProgramaContext ctx) {
+        // Inicia a tabela de símbolos no início do programa.
         tabela = new TabelaDeSimbolos();
         return super.visitPrograma(ctx);
     }
 
     @Override
     public Void visitDeclaracao(AlgumaParser.DeclaracaoContext ctx) {
+        // Trata declarações de variáveis.
         String nomeVar = ctx.VARIAVEL().getText();
         String strTipoVar = ctx.TIPO_VAR().getText();
         TipoAlguma tipoVar = TipoAlguma.INVALIDO;
+        // Determina o tipo da variável com base no tipo fornecido.
         switch (strTipoVar) {
             case "INTEIRO":
                 tipoVar = TipoAlguma.INTEIRO;
@@ -25,8 +28,7 @@ public class AlgumaSemantico extends AlgumaBaseVisitor<Void> {
                 tipoVar = TipoAlguma.REAL;
                 break;
             default:
-                // Nunca irá acontecer, pois o analisador sintático
-                // não permite
+                // Não deveria ocorrer, pois o analisador sintático garante tipos válidos.
                 break;
         }
 
@@ -42,6 +44,7 @@ public class AlgumaSemantico extends AlgumaBaseVisitor<Void> {
 
     @Override
     public Void visitComandoAtribuicao(AlgumaParser.ComandoAtribuicaoContext ctx) {
+        // Trata atribuições de valores a variáveis
         TipoAlguma tipoExpressao = AlgumaSemanticoUtils.verificarTipo(tabela, ctx.expressaoAritmetica());
         if (tipoExpressao != TipoAlguma.INVALIDO) {
             String nomeVar = ctx.VARIAVEL().getText();
@@ -59,6 +62,7 @@ public class AlgumaSemantico extends AlgumaBaseVisitor<Void> {
 
     @Override
     public Void visitComandoEntrada(AlgumaParser.ComandoEntradaContext ctx) {
+        // Trata comandos de entrada.
         String nomeVar = ctx.VARIAVEL().getText();
         if (!tabela.existe(nomeVar)) {
             AlgumaSemanticoUtils.adicionarErroSemantico(ctx.VARIAVEL().getSymbol(), "Variável " + nomeVar + " não foi declarada antes do uso");

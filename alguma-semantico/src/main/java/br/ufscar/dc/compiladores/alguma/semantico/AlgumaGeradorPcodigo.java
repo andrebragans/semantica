@@ -1,4 +1,5 @@
 package br.ufscar.dc.compiladores.alguma.semantico;
+// Classe responsável por gerar código de máquina virtual (P-código) a partir de uma AST da linguagem Alguma
 
 public class AlgumaGeradorPcodigo extends AlgumaBaseVisitor<String> {
 
@@ -8,6 +9,7 @@ public class AlgumaGeradorPcodigo extends AlgumaBaseVisitor<String> {
 
     @Override
     public String visitPrograma(AlgumaParser.ProgramaContext ctx) {
+        // Gera código para as declarações e comandos
         String pcod = "";
         ctx.declaracao().forEach(dec -> visitDeclaracao(dec));
         for (var c : ctx.comando()) {
@@ -19,12 +21,14 @@ public class AlgumaGeradorPcodigo extends AlgumaBaseVisitor<String> {
 
     @Override
     public String visitDeclaracao(AlgumaParser.DeclaracaoContext ctx) {
+        // Adiciona uma nova variável à tabela de símbolos com o próximo endereço disponível
         tabela.adicionar(ctx.VARIAVEL().getText(), enderecoAtual++);
         return null;
     }
 
     @Override
     public String visitExpressaoAritmetica(AlgumaParser.ExpressaoAritmeticaContext ctx) {
+        // Gera código para expressões aritméticas
         String pcod = "";
         pcod += visitTermoAritmetico(ctx.termoAritmetico(0));
         for (int i = 1; i < ctx.termoAritmetico().size(); i++) {
@@ -40,6 +44,7 @@ public class AlgumaGeradorPcodigo extends AlgumaBaseVisitor<String> {
 
     @Override
     public String visitTermoAritmetico(AlgumaParser.TermoAritmeticoContext ctx) {
+        // Gera código para termos aritméticos (multiplicação e divisão)
         String pcod = "";
         pcod += visitFatorAritmetico(ctx.fatorAritmetico(0));
         for (int i = 1; i < ctx.fatorAritmetico().size(); i++) {
@@ -55,6 +60,7 @@ public class AlgumaGeradorPcodigo extends AlgumaBaseVisitor<String> {
 
     @Override
     public String visitFatorAritmetico(AlgumaParser.FatorAritmeticoContext ctx) {
+        // Gera código para fatores aritméticos (constantes, variáveis ou subexpressões)
         if (ctx.NUMINT() != null) {
             return "ldc " + ctx.NUMINT().getText() + "\n";
         } else if (ctx.NUMREAL() != null) {
@@ -69,6 +75,7 @@ public class AlgumaGeradorPcodigo extends AlgumaBaseVisitor<String> {
 
     @Override
     public String visitExpressaoRelacional(AlgumaParser.ExpressaoRelacionalContext ctx) {
+        // Gera código para expressões relacionais e booleanas
         String pcod = visitTermoRelacional(ctx.termoRelacional(0));
         for (int i = 1; i < ctx.termoRelacional().size(); i++) {
             pcod += visitTermoRelacional(ctx.termoRelacional(i));
@@ -84,6 +91,7 @@ public class AlgumaGeradorPcodigo extends AlgumaBaseVisitor<String> {
 
     @Override
     public String visitTermoRelacional(AlgumaParser.TermoRelacionalContext ctx) {
+        // Gera código para termos relacionais (comparações)
         String pcod = "";
         if (ctx.expressaoRelacional() != null) {
             pcod = visitExpressaoRelacional(ctx.expressaoRelacional());
@@ -119,6 +127,7 @@ public class AlgumaGeradorPcodigo extends AlgumaBaseVisitor<String> {
 
     @Override
     public String visitComando(AlgumaParser.ComandoContext ctx) {
+        // Despacha para o tipo específico de comando
         if (ctx.comandoAtribuicao() != null) {
             return visitComandoAtribuicao(ctx.comandoAtribuicao());
         } else if (ctx.comandoEntrada() != null) {
@@ -137,6 +146,7 @@ public class AlgumaGeradorPcodigo extends AlgumaBaseVisitor<String> {
 
     @Override
     public String visitComandoAtribuicao(AlgumaParser.ComandoAtribuicaoContext ctx) {
+        // Gera código para atribuições
         int endereco = tabela.verificarEndereco(ctx.VARIAVEL().getText());
         return "lda " + endereco + "\n"
                 + visitExpressaoAritmetica(ctx.expressaoAritmetica())
@@ -145,6 +155,7 @@ public class AlgumaGeradorPcodigo extends AlgumaBaseVisitor<String> {
 
     @Override
     public String visitComandoEntrada(AlgumaParser.ComandoEntradaContext ctx) {
+        // Gera código para comandos de entrada
         int endereco = tabela.verificarEndereco(ctx.VARIAVEL().getText());
         return "lda " + endereco + "\n"
                 + "rdi\n";
@@ -152,15 +163,17 @@ public class AlgumaGeradorPcodigo extends AlgumaBaseVisitor<String> {
 
     @Override
     public String visitComandoSaida(AlgumaParser.ComandoSaidaContext ctx) {
+        // Gera código para comandos de saída
         if (ctx.expressaoAritmetica() != null) {
-            return visitExpressaoAritmetica(ctx.expressaoAritmetica()) +
-                    "wri\n";
+            return visitExpressaoAritmetica(ctx.expressaoAritmetica())
+                    + "wri\n";
         }
         return "";
     }
 
     @Override
     public String visitComandoCondicao(AlgumaParser.ComandoCondicaoContext ctx) {
+        // Gera código para comandos condicionais (if/else)
         String pcod;
 
         int label1 = label++;
@@ -182,6 +195,7 @@ public class AlgumaGeradorPcodigo extends AlgumaBaseVisitor<String> {
 
     @Override
     public String visitComandoRepeticao(AlgumaParser.ComandoRepeticaoContext ctx) {
+        // Gera código para laços de repetição (while)
         String pcod;
         int label1 = label++;
         int label2 = label++;
@@ -197,6 +211,7 @@ public class AlgumaGeradorPcodigo extends AlgumaBaseVisitor<String> {
 
     @Override
     public String visitSubAlgoritmo(AlgumaParser.SubAlgoritmoContext ctx) {
+        // Gera código para blocos de comandos
         String pcod = "";
         for (var c : ctx.comando()) {
             pcod += visitComando(c);

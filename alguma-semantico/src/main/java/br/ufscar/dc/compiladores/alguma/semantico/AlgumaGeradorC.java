@@ -4,9 +4,10 @@ import br.ufscar.dc.compiladores.alguma.semantico.TabelaDeSimbolos.TipoAlguma;
 
 public class AlgumaGeradorC extends AlgumaBaseVisitor<Void> {
 
-    StringBuilder saida;
-    TabelaDeSimbolos tabela;
+    StringBuilder saida;// Armazena o código C gerado
+    TabelaDeSimbolos tabela;// Tabela de símbolos para controle semântico
 
+    // Construtor inicializa os objetos de saída e tabela de símbolos
     public AlgumaGeradorC() {
         saida = new StringBuilder();
         this.tabela = new TabelaDeSimbolos();
@@ -14,12 +15,19 @@ public class AlgumaGeradorC extends AlgumaBaseVisitor<Void> {
 
     @Override
     public Void visitPrograma(AlgumaParser.ProgramaContext ctx) {
+        // Adiciona os cabeçalhos padrão do C
         saida.append("#include <stdio.h>\n");
         saida.append("#include <stdlib.h>\n");
         saida.append("\n");
+
+        // Visita as declarações do programa
         ctx.declaracao().forEach(dec -> visitDeclaracao(dec));
         saida.append("\n");
+
+        // Adiciona a função main
         saida.append("int main() {\n");
+
+        // Visita os comandos do programa
         ctx.comando().forEach(cmd -> visitComando(cmd));
         saida.append("}\n");
         return null;
@@ -30,6 +38,8 @@ public class AlgumaGeradorC extends AlgumaBaseVisitor<Void> {
         String nomeVar = ctx.VARIAVEL().getText();
         String strTipoVar = ctx.TIPO_VAR().getText();
         TabelaDeSimbolos.TipoAlguma tipoVar = TabelaDeSimbolos.TipoAlguma.INVALIDO;
+
+        // Mapeia os tipos de Alguma para os tipos equivalentes em C
         switch (strTipoVar) {
             case "INTEIRO":
                 tipoVar = TabelaDeSimbolos.TipoAlguma.INTEIRO;
@@ -40,12 +50,11 @@ public class AlgumaGeradorC extends AlgumaBaseVisitor<Void> {
                 strTipoVar = "float";
                 break;
             default:
-                // Nunca irá acontecer, pois o analisador sintático
-                // não permite
+                // Caso não esperado, pois a análise sintática já valida os tipos
                 break;
         }
-        // Podemos adicionar na tabela de símbolos sem verificar
-        // pois a análise semântica já fez as verificações
+
+        // Adiciona a variável na tabela de símbolos
         tabela.adicionar(nomeVar, tipoVar);
         saida.append(strTipoVar + " " + nomeVar + ";\n");
         return null;
@@ -53,6 +62,7 @@ public class AlgumaGeradorC extends AlgumaBaseVisitor<Void> {
 
     @Override
     public Void visitComandoAtribuicao(AlgumaParser.ComandoAtribuicaoContext ctx) {
+        // Gera atribuição de variável no formato C
         saida.append(ctx.VARIAVEL().getText() + " = ");
         visitExpressaoAritmetica(ctx.expressaoAritmetica());
         saida.append(";\n");
@@ -85,6 +95,8 @@ public class AlgumaGeradorC extends AlgumaBaseVisitor<Void> {
                 aux = "%f";
                 break;
         }
+
+        // Gera o comando scanf correspondente
         saida.append("scanf(\"" + aux + "\", &" + nomeVar + ");\n");
         return null;
     }
@@ -101,12 +113,16 @@ public class AlgumaGeradorC extends AlgumaBaseVisitor<Void> {
     @Override
     public Void visitComandoSaida(AlgumaParser.ComandoSaidaContext ctx) {
         if (ctx.CADEIA() != null) {
+            // Saída de uma cadeia de caracteres
             String aux = ctx.CADEIA().getText();
             aux = aux.substring(1, aux.length() - 1);
             saida.append("printf(\"" + aux + "\\n\");\n");
         } else {
+            // Saída de uma expressão aritmética
             TipoAlguma tipoExpressao = AlgumaSemanticoUtils.verificarTipo(tabela, ctx.expressaoAritmetica());
             String aux = "";
+
+            // Seleciona o formato correto para a impressão
             switch (tipoExpressao) {
                 case INTEIRO:
                     aux = "%d";
@@ -124,6 +140,7 @@ public class AlgumaGeradorC extends AlgumaBaseVisitor<Void> {
 
     @Override
     public Void visitSubAlgoritmo(AlgumaParser.SubAlgoritmoContext ctx) {
+        // Gera um bloco de código com chaves
         saida.append("{\n");
         ctx.comando().forEach(cmd -> visitComando(cmd));
         saida.append("}\n");
@@ -132,6 +149,7 @@ public class AlgumaGeradorC extends AlgumaBaseVisitor<Void> {
 
     @Override
     public Void visitExpressaoAritmetica(AlgumaParser.ExpressaoAritmeticaContext ctx) {
+        // Visita termos e operadores aritméticos
         visitTermoAritmetico(ctx.termoAritmetico(0));
         for (int i = 0; i < ctx.OP_ARIT1().size(); i++) {
             saida.append(" " + ctx.OP_ARIT1(i).getText() + " ");
@@ -142,6 +160,7 @@ public class AlgumaGeradorC extends AlgumaBaseVisitor<Void> {
 
     @Override
     public Void visitTermoAritmetico(AlgumaParser.TermoAritmeticoContext ctx) {
+        // Processa fatores aritméticos
         visitFatorAritmetico(ctx.fatorAritmetico(0));
         for (int i = 0; i < ctx.OP_ARIT2().size(); i++) {
             saida.append(" " + ctx.OP_ARIT2(i).getText() + " ");
@@ -152,6 +171,7 @@ public class AlgumaGeradorC extends AlgumaBaseVisitor<Void> {
 
     @Override
     public Void visitFatorAritmetico(AlgumaParser.FatorAritmeticoContext ctx) {
+        // Verifica o tipo do fator (número, variável ou expressão)
         if (ctx.NUMINT() != null) {
             saida.append(ctx.NUMINT().getText());
         } else if (ctx.NUMREAL() != null) {
@@ -168,6 +188,7 @@ public class AlgumaGeradorC extends AlgumaBaseVisitor<Void> {
 
     @Override
     public Void visitExpressaoRelacional(AlgumaParser.ExpressaoRelacionalContext ctx) {
+        // Processa expressões relacionais e booleanas
         visitTermoRelacional(ctx.termoRelacional(0));
         for (int i = 0; i < ctx.OP_BOOL().size(); i++) {
             String aux = null;
@@ -184,6 +205,7 @@ public class AlgumaGeradorC extends AlgumaBaseVisitor<Void> {
 
     @Override
     public Void visitTermoRelacional(AlgumaParser.TermoRelacionalContext ctx) {
+        // Processa termos relacionais ou subexpressões
         if (ctx.expressaoRelacional() != null) {
             saida.append("(");
             visitExpressaoRelacional(ctx.expressaoRelacional());

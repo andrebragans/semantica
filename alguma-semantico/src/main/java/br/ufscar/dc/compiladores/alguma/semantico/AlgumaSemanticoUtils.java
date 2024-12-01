@@ -5,14 +5,16 @@ import java.util.List;
 import org.antlr.v4.runtime.Token;
 
 public class AlgumaSemanticoUtils {
+
+    // Lista para armazenar erros semânticos detectados.
     public static List<String> errosSemanticos = new ArrayList<>();
-    
+
     public static void adicionarErroSemantico(Token t, String mensagem) {
         int linha = t.getLine();
         int coluna = t.getCharPositionInLine();
         errosSemanticos.add(String.format("Erro %d:%d - %s", linha, coluna, mensagem));
     }
-    
+
     public static TabelaDeSimbolos.TipoAlguma verificarTipo(TabelaDeSimbolos tabela, AlgumaParser.ExpressaoAritmeticaContext ctx) {
         TabelaDeSimbolos.TipoAlguma ret = null;
         for (var ta : ctx.termoAritmetico()) {
@@ -31,6 +33,7 @@ public class AlgumaSemanticoUtils {
     public static TabelaDeSimbolos.TipoAlguma verificarTipo(TabelaDeSimbolos tabela, AlgumaParser.TermoAritmeticoContext ctx) {
         TabelaDeSimbolos.TipoAlguma ret = null;
 
+        // Itera sobre os termos aritméticos da expressão.
         for (var fa : ctx.fatorAritmetico()) {
             TabelaDeSimbolos.TipoAlguma aux = verificarTipo(tabela, fa);
             if (ret == null) {
@@ -62,8 +65,8 @@ public class AlgumaSemanticoUtils {
         // entre parêntesis
         return verificarTipo(tabela, ctx.expressaoAritmetica());
     }
-    
+
     public static TabelaDeSimbolos.TipoAlguma verificarTipo(TabelaDeSimbolos tabela, String nomeVar) {
-        return tabela.verificar(nomeVar);
+        return tabela.verificar(nomeVar);// Consulta o tipo da variável na tabela.
     }
 }
