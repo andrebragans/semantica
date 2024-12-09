@@ -2,6 +2,7 @@
 numero1:INTEIRO
 numero2:INTEIRO
 numero3:INTEIRO
+numero4:REAL
 aux:INTEIRO
 
 :ALGORITMO
